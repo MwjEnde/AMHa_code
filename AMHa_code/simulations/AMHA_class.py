@@ -46,13 +46,13 @@ class AmhaModel:
         self.constants = {
             #Automatic, Social
             # DIVIDED BY 46, as 4.6 is the average in years between examinations, resulting in 10 iterations per year - so to run 5 years number_of_iterations should be 50
-            'a_m': np.array([0.2153*mtp_ai[0] + flat_ai, 0.0189 * mtp_bi[0] + flat_bi]) / 46, 
-            'a_h': np.array([0.0084*mtp_ai[1] + flat_ai, 0.0000 * mtp_bi[1] + flat_bi]) / 46,
-            'm_a': np.array([0.1917*mtp_ar[0] + flat_ar, 0.0348 * mtp_br[0] + flat_br]) / 46,
-            'm_h': np.array([0.0881*mtp_ai[2] + flat_ai, 0.0346 * mtp_bi[2] + flat_bi]) / 46,
-            'h_a': np.array([0.0555*mtp_ar[1] + flat_ar, 0.0183 * mtp_br[1] + flat_br]) / 46,
-            'h_m': np.array([0.3038*mtp_ar[2] + flat_ar, 0.0000 * mtp_br[2] + flat_br]) / 46,  # Social rate from A-> M ~ H
-            'a_m_h': np.array([0.0*mtp_bi[3] + flat_bi]) / 46,
+            'a_m': np.array([0.2108*mtp_ai[0] + flat_ai, 0.0202 * mtp_bi[0] + flat_bi]) / 46, 
+            'a_h': np.array([0.0081*mtp_ai[1] + flat_ai, 0.0000 * mtp_bi[1] + flat_bi]) / 46,
+            'm_a': np.array([0.1942*mtp_ar[0] + flat_ar, 0.0348 * mtp_br[0] + flat_br]) / 46,
+            'm_h': np.array([0.0839*mtp_ai[2] + flat_ai, 0.0357 * mtp_bi[2] + flat_bi]) / 46,
+            'h_a': np.array([0.0558*mtp_ar[1] + flat_ar, 0.0190 * mtp_br[1] + flat_br]) / 46,
+            'h_m': np.array([0.2997*mtp_ar[2] + flat_ar, 0.0000 * mtp_br[2] + flat_br]) / 46,  # Social rate from A-> M ~ H
+            'a_m_h': np.array([0.0271*mtp_bi[3] + flat_bi]) / 46,
         }
 
         initial_state = {

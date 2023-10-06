@@ -3,25 +3,20 @@
 from init_rcParams import set_mpl_settings
 set_mpl_settings()
 #%%
-import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 import network_from_pd as FHS_net
 import pandas as pd
-
-from dynsimf.models.Model import Model
-from dynsimf.models.Model import ModelConfiguration
 import pickle
 import multiprocessing 
-# import statsmodels.stats.api as sms
 import statsmodels.stats.weightstats as sms
 #%%
 import AMHA_class
 amha_class = AMHA_class.AmhaModel(FHS_net.G_relabled)
 
 #%%
-number_of_iterations_sweep = 800
-n_sweeps = 20
+number_of_iterations_sweep = 400
+n_sweeps = 10
 #%%
 
 #%%
@@ -47,16 +42,16 @@ pool.join()
 
 #%%
 ### OBTAIN DATA POINTS
-with open('../../treasure/data_files/main/df_list_aug.pkl', 'rb') as fp:
+with open('../../treasure/data_files/main/df_list_nov.pkl', 'rb') as fp:
     df_list = pickle.load(fp) 
     
 for i, df in enumerate(df_list):
-    df = df.dropna(subset = ['d_state_ego','d_state_alter'], axis = 0)
-    df = df.loc[df.age >= 21]
     # Only take where we know drinking data
     df = df.dropna(subset = ['d_state_ego','d_state_alter'], axis = 0)
     # Also drop where drinking state = -1 because we do not have sex
     df = df.loc[df.d_state_ego != -1]
+    # Only take adults
+    df = df.loc[df.age >= 21]
     df_list[i] = df
 
 prevalence_df_list = []
@@ -82,7 +77,7 @@ all_prevalences = pd.concat(prevalence_df_list)
 import pandas as pd
 import matplotlib.pyplot as plt
 
-n_iter = 801 # For 50 iterations per year
+n_iter = number_of_iterations_sweep+1 # For 50 iterations per year
 
 
 # Load prevalence_data.csv into a dataframe
@@ -90,15 +85,8 @@ n_iter = 801 # For 50 iterations per year
 prevalence_df = all_prevalences
 
 # Define the x-axis locations for the data points
-# dates = [1975, 1979, 1983, 1987, 1991, 1995, 1999]
 dates = [1972,1981, 1985, 1989, 1993, 1997, 2000]
-# ttnw3 = [8.55, 4.35, 3.60, 3.69, 4.08, 2.92]
-# dates = [1983-4.36-8.55,1983-4.36,1983,1983+3.6,1983+3.6+3.69,1983+3.6+3.69+4.08,1983+3.6+3.69+4.08+2.92]
-# dates = np.arange(1976,1980,)
 
-# Add the existing line plot with confidence intervals
-# with open('./pickles/future_prevalence.pkl', 'rb') as fp:
-    # result_avg = pickle.load(fp)
     
 num_nodes = results.sum(axis=1)[0]
 result_avg_frac = results / num_nodes 
@@ -137,17 +125,5 @@ plt.show()
 
 
 
-
-# %%
-numbers = [1981, 1985, 1989, 1993, 1997, 2000]
-sorted_numbers = sorted(numbers)
-
-differences = []
-for i in range(len(sorted_numbers) - 1):
-    difference = sorted_numbers[i+1] - sorted_numbers[i]
-    differences.append(difference)
-
-average_distance = sum(differences) / len(differences)
-print(f"The average distance between the numbers is: {average_distance}")
 
 # %%
