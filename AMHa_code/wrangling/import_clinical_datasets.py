@@ -2,8 +2,7 @@
 import pandas as pd
 from pathlib import Path
 
-# data_folder = Path("~/Downloads/sratoolkit.2.11.1-ubuntu64/bin/dbGaP-27276/")
-data_folder = '../'/Path.home()/'Documents/HPC_treasure/hpc/sratoolkit.2.11.1-ubuntu64/bin/dbGaP-27276/'
+data_folder = '../'/Path.home()/''
 
 
 def import_clinical_datasets_drinks_PW():

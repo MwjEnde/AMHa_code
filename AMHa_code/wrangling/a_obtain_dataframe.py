@@ -8,7 +8,7 @@ import numpy as np
 import import_clinical_datasets
 
 from pathlib import Path
-data_folder = '../'/Path.home()/'Documents/HPC_treasure/hpc/sratoolkit.2.11.1-ubuntu64/bin/dbGaP-27276/'
+data_folder = ''
 
 #%%
 def extract_social_net(include = None, exclude = ['N100MNREL'], singular = None):
