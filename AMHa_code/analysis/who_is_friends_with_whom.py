@@ -1,9 +1,8 @@
 #%%
-from cmath import exp
-from math import factorial
+##### THIS CODE CALCULATES table 3 ON CLUSTERING, SPATIAL CORRELATIONS
+
 import numpy as np
 import pandas as pd
-import networkx as nx
 import init_rcParams
 
 init_rcParams.set_mpl_settings()
@@ -14,24 +13,17 @@ from ipywidgets import interact, interactive, fixed, interact_manual,widgets
 import pickle
 
 from pathlib import Path
-# data_folder = Path.home()/'Downloads/sratoolkit.2.11.1-ubuntu64/bin/dbGaP-27276/'
 #%%
-with open('/home/maarten/Documents/treasure/data_files/main/df_list_nov.pkl', 'rb') as fp:
-# with open('./data_files/main/df_list_nov.pkl', 'rb') as fp:
+with open('../../treasure/data_files/main/df_list_nov.pkl', 'rb') as fp:
     df_list = pickle.load(fp)
-    
-dynamic_df = pd.read_csv('./data_files/main/df_nov.csv')
 
-# !!!! takes only adults!!!!
 for i, df in enumerate(df_list):
     # Only take adults
-    df = df.loc[df.age >= 21]
-    # Only take where we know drinking data
     df = df.dropna(subset = ['d_state_ego','d_state_alter'], axis = 0)
-
     df = df.loc[df.d_state_ego != -1]
-    df = df.loc[df.d_state_alter != -1]
+    df = df.loc[df.age >= 21]
     df_list[i] = df
+
 #%%
 
 

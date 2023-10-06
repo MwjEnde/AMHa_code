@@ -1,47 +1,24 @@
 
-
+###### THIS CODE GENERATES Table 2, Figure 1, and Correlation Coefficient r in 'Stability of drinking states', and transition probabilities of section 'Three-state system'
 #%%
-from code import interact
-from functools import total_ordering
-from genericpath import sameopenfile
-from multiprocessing import get_all_start_methods
+
 import numpy as np
 import pandas as pd
-import networkx as nx
 import init_rcParams
 init_rcParams.set_mpl_settings()
-from statsmodels.stats import proportion
 import matplotlib.pyplot as plt
 import pickle
-from pathlib import Path
 
-import statsmodels.formula.api as smf
-
-from statsmodels.stats import proportion
-from statsmodels.tools import add_constant
-from statsmodels.discrete import discrete_model
-import statsmodels.api as sm
-# import sys
-# sys.path.append('/home/maarten/Documents/treasure')
-
-with open('/home/maarten/Documents/treasure/data_files/main/df_list_nov.pkl', 'rb') as fp:
+#%%
+with open('../../treasure/data_files/main/df_list_nov.pkl', 'rb') as fp:
     df_list = pickle.load(fp)
-    
-dynamic_df = pd.read_csv('/home/maarten/Documents/treasure/data_files/main/df_nov.csv')
 
-
-# %%
-# df_list[0]
 for i, df in enumerate(df_list):
     # Only take adults
-    df = df.loc[df.age >= 21]
-    # Only take where we know drinking data
     df = df.dropna(subset = ['d_state_ego','d_state_alter'], axis = 0)
-    # Also drop where drinking state = -1 because we do not have sex
-    #! doesnt work / doesnt solve it? check the -1
     df = df.loc[df.d_state_ego != -1]
+    df = df.loc[df.age >= 21]
     df_list[i] = df
-#%%
 
 
 # %%
@@ -68,8 +45,9 @@ for state in range(0,3):
 
 k = foo.groupby(foo.state).mean().reset_index()
 #%%
-# CORRELATION TESTING
+# CORRELATION TESTIN
 import pingouin as pg
+
 
 corr_list = []
 r_list = []
@@ -82,7 +60,7 @@ for w in range(0,6):
     both = both.groupby('shareid').mean().reset_index().astype(int)
     both = both.loc[(both.d_state_ego_x != -1) & (both.d_state_ego_y != -1)]
 
-    plt.scatter(both.d_state_ego_x, both.d_state_ego_y)
+    # plt.scatter(both.d_state_ego_x, both.d_state_ego_y)
     corr = pg.corr(both.d_state_ego_x, both.d_state_ego_y)
 
     corr_list.append(corr)
@@ -115,32 +93,6 @@ perc = df.apply(lambda x: x/x.iloc[3], axis = 1).drop(columns = [3])
 
 #%%
 perc
-#%%
-
-# harvest =perc
-# vegetables = ["abstaining", "moderate", "heavy"]
-# farmers = ["abstaining", "moderate", "heavy"]
-# fig, ax = plt.subplots()
-# im = ax.imshow(harvest,cmap="Greens")
-
-# # Show all ticks and label them with the respective list entries
-# ax.set_xticks(np.arange(len(farmers)), labels=farmers)
-# ax.set_yticks(np.arange(len(vegetables)), labels=vegetables)
-
-# # Rotate the tick labels and set their alignment.
-# plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
-#         rotation_mode="anchor")
-
-# # Loop over data dimensions and create text annotations.
-# for i in range(len(vegetables)):
-#     for j in range(len(farmers)):
-#         text = ax.text(j, i, np.round(harvest.values[i, j],3),
-#                     ha="center", va="center", color="#1C110A")
-
-# ax.set_title(f"Probability\y to go to which state \n ")
-# fig.tight_layout()
-# plt.show()
-
 
 
 #%%
@@ -215,44 +167,6 @@ bound_list = range(1,20)
 for i in bound_list:
     foo.append(get_stable_state_analysis(df_list, cutoff = i).values)
 foo = np.asarray(foo)
-    
-#%%
-# p tot stay per year plot ABSTAINING:
-plt.plot(bound_list, foo[:,0,5], label="all")
-plt.plot(bound_list, foo[:,0,3], label="female")
-plt.plot(bound_list, foo[:,0,1], label="men")
-plt.legend()
-plt.xlabel('Moderate use upper bound (women, 2x for men)')
-plt.ylabel('Stability /y ')
-plt.title('Abstaining')
-plt.axvline(x = 7, ls = ':')
-plt.show()
-
-#%%
-# p tot stay per year plot MEDIUM DRINKING:
-data = foo[:,1,5]
-plt.plot(bound_list, data, label="all")
-plt.plot(bound_list, foo[:,1,3], label="female")
-plt.plot(bound_list, foo[:,1,1], label="men")
-plt.legend()
-plt.xlabel('Moderate use upper bound (women, 2x for men)')
-plt.ylabel('Stability /y')
-plt.title('Moderate drinking')
-plt.axvline(x = 7, ls = ':')
-plt.show()
-
-#%%
-# p tot stay per year plot Heavy:
-plt.plot(bound_list, foo[:,2,5], label="all")
-plt.plot(bound_list, foo[:,2,3], label="female")
-plt.plot(bound_list, foo[:,2,1], label="men")
-plt.legend()
-plt.xlabel('Moderate use upper bound (women, 2x for men)')
-plt.ylabel('Stability /y ')
-plt.title('Heavy Drinking')
-plt.axvline(x = 7, ls = ':')
-plt.show()
-
 #%%
 # p tot stay per year plot all states all:
 plt.plot(bound_list, foo[:,0,5], label="abstaining", linestyle = '-.')
@@ -264,42 +178,3 @@ plt.ylabel('Stability /y ')
 # plt.title('All states Drinking, men and women')
 plt.axvline(x = 7, ls = '-')
 plt.show()
-#%%
-# p tot stay per year plot all states MEN:
-plt.plot(bound_list, foo[:,0,1], label="abstaining")
-plt.plot(bound_list, foo[:,1,1], label="moderate")
-plt.plot(bound_list, foo[:,2,1], label="heavy")
-plt.legend()
-plt.xlabel('Moderate use upper bound (women, 2x for men)(/week)')
-plt.ylabel('Stability /y ')
-plt.title('All states Drinking men')
-plt.axvline(x = 7, ls = ':')
-plt.show()
-#%%
-# p tot stay per year plot all states Women:
-plt.plot(bound_list, foo[:,0,3], label="abstaining")
-plt.plot(bound_list, foo[:,1,3], label="moderate")
-plt.plot(bound_list, foo[:,2,3], label="heavy")
-plt.legend()
-plt.xlabel('Moderate use upper bound (women, 2x for men)(/week)')
-plt.ylabel('Stability /y ')
-plt.title('All states Drinking Women')
-plt.axvline(x = 7, ls = ':')
-plt.show()
-
-
-#%%
-# p tot stay per year plot medium added :
-
-plt.plot(bound_list, np.asarray(foo[:,1,3]) + foo[:,2,3], label="combined Women")
-plt.plot(bound_list, np.asarray(foo[:,1,1]) + foo[:,2,1], label="combined Men")
-
-plt.legend()
-plt.xlabel('Moderate use upper bound (women, 2x for men)(/week)')
-plt.ylabel('Stability /y ')
-plt.title('Sum of stability heavy + moderate')
-plt.axvline(x = 7, ls = ':')
-plt.show()
-
-
-#%%

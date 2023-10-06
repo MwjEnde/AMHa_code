@@ -1,40 +1,30 @@
 
-
+######## THIS CODE GENERATES Figure 2, the input of Figure 3 and SUPPLEMENTARY FIGURES S1, S2, S4
 #%%
-from code import interact
-from multiprocessing import get_all_start_methods
 import numpy as np
 import pandas as pd
-import networkx as nx
 from statsmodels.stats import proportion
 import matplotlib.pyplot as plt
 import pickle
-from pathlib import Path
 from init_rcParams import set_mpl_settings
-set_mpl_settings()
-import statsmodels.formula.api as smf
-
-from statsmodels.stats import proportion
+try: set_mpl_settings()
+except ValueError: pass
 from statsmodels.tools import add_constant
-from statsmodels.discrete import discrete_model
 import statsmodels.api as sm
 
 #%%
-# with open('../../treasure/data_files/main/df_list_nov.pkl', 'rb') as fp:
-with open('../../treasure/data_files/main/df_list_aug.pkl', 'rb') as fp:
+with open('../../treasure/data_files/main/df_list_nov.pkl', 'rb') as fp:
     df_list = pickle.load(fp)
-    
 
-# !! takes only adults
 for i, df in enumerate(df_list):
+    # Only take known drinking states
+    df = df.dropna(subset = ['d_state_ego','d_state_alter'], axis = 0)
+    df = df.loc[df.d_state_ego != -1]
     # Only take adults
     df = df.loc[df.age >= 21]
-    # Only take where we know drinking data
-    df = df.dropna(subset = ['d_state_ego','d_state_alter'], axis = 0)
-    # Also drop where drinking state = -1 because we do not have sex
-    #! doesnt work / doesnt solve it? check the -1
-    df = df.loc[df.d_state_ego != -1]
     df_list[i] = df
+
+
 #%%
 
 def get_stats(df_list, state_x, w, age_range = (0,0)):
@@ -159,7 +149,7 @@ def plot_from_stats(state_x = 1, state_y = 2, d_state_alter = 2, w = 0, age_rang
     line_low = lb_a + lb_b * x_list
     line_high = hb_a + hb_b * x_list
     plt.fill_between(x_list, y1 = line_low, y2 = line_high, alpha = 0.4, color = fit_color, 
-                     label = f'$\u03B1$: {model.params[0]:.4f} {pval_text_alpha} \n$\u03B2$: {model.params[1]:.4f} {pval_text}')
+                   label = f'$\u03B2$: {model.params[1]:.4f} {pval_text}') #  label = f'$\u03B1$: {model.params[0]:.4f} {pval_text_alpha} 
     # plt.annotate('x1: {}, p: {}'.format(np.around(model.params[1],3),np.around(model.pvalues[1], 3)), xy = (0.1,0.1), xycoords='axes fraction')
     y = a + b * x_list
     plt.plot(x_list,y, '--', color = fit_color)
@@ -173,7 +163,6 @@ def plot_from_stats(state_x = 1, state_y = 2, d_state_alter = 2, w = 0, age_rang
     plt.xlabel("# of {} contacts".format(state_name[d_state_alter]))
     # plt.show()
     
-#%%
 
 #%%
 
@@ -476,4 +465,115 @@ plot_counter = 0
 
 #%%
 # 
+#### LOGISTIC FIT VERSUS LINEAR FIT
 
+from ipywidgets import interact, interactive, fixed, interact_manual,widgets
+@interact(state_x = (0,2,1), state_y = (0,2,1), d_state_alter = (0,2,1), w = range(0,6), age_range_min= widgets.IntSlider(min = 0, max =100,step = 5, value =0), age_range_max = widgets.IntSlider(min = 30,max = 100, step = 5, value = 100), all_waves = False, grey_fit = False)
+def log_plot_from_stats(state_x = 1, state_y = 2, d_state_alter = 2, w = 0, age_range_min = 0, age_range_max = 0, all_waves = False, grey_fit = False):
+    
+    
+    age_range = (age_range_min, age_range_max)
+    
+    # global stats
+    if all_waves: stats = get_stats_all_waves(df_list, state_x, age_range)
+    else: stats = get_stats(df_list, state_x = state_x, w = w, age_range = age_range)
+
+    global n_obs
+    plot_stats = stats.groupby('d_state_alter_{}'.format(d_state_alter)).mean().reset_index()
+    n_obs = stats.assign(num_ego = 1)[['d_state_alter_{}'.format(d_state_alter),'d_state_ego_y_{}'.format(state_y),'num_ego']].groupby('d_state_alter_{}'.format(d_state_alter)).sum().reset_index()
+    
+    # Plot data points 
+    confidence_intervals = proportion.proportion_confint(n_obs.iloc[:,1],n_obs.iloc[:,2])
+    y_err = np.array(confidence_intervals[1]) - plot_stats['d_state_ego_y_{}'.format(state_y)]
+    
+    markers, caps, bars = plt.errorbar(plot_stats.index,  plot_stats['d_state_ego_y_{}'.format(state_y)], yerr = y_err, fmt ='s' , ecolor = '#880D1E',  markersize = 10, color = '#1C110A', fillstyle = 'full')
+
+    # # if show_number: 
+    # for i in range(len(n_obs.index.values)):
+    #     plt.annotate(str(n_obs.num_ego.values[i]), (plot_stats.index.values[i]+0.02, plot_stats['d_state_ego_y_{}'.format(state_y)].values[i]+0.04), fontweight = 'demi')
+        
+
+    # Logistic Fit
+    X = stats['d_state_alter_{}'.format(d_state_alter)].values
+    X = add_constant(X)
+    model = sm.Logit(endog = stats['d_state_ego_y_{}'.format(state_y)], exog = X).fit()
+    # print(model.summary())
+
+    # Plot fit
+    if grey_fit == False:
+        fit_color = '#C18203'
+    else: fit_color = '0.8'
+    
+    if model.pvalues[1] <= 0.001:
+        pval_text = ', p < 0.001'
+    else: pval_text = f', p = {model.pvalues[1]:.3f}'
+    if model.pvalues[0] <= 0.001:
+        pval_text_alpha = ', p < 0.001'
+    else: pval_text_alpha = f', p = {model.pvalues[0]:.3f}'
+    a, b = model.params
+    # lb_a, lb_b = model.conf_int()[0]
+    # hb_a, hb_b = model.conf_int()[1]
+    x_list = np.arange(0,7,1)
+        
+    y = 1/(1+np.exp(-(a+b*x_list)))
+    plt.plot(x_list,y, '-', color = 'blue', label = f'Logistic, x1: z ={model.params.values[1] / model.bse.values[1]:.2f}, p = {model.pvalues.values[1]:.2f}')
+    
+    # line_low = lb_a + lb_b * x_list
+    # line_high = hb_a + hb_b * x_list
+    # plt.fill_between(x_list, y1 = line_low, y2 = line_high, alpha = 0.4, color = fit_color, 
+    #                  label = f'$\u03B1$: {model.params[0]:.4f} {pval_text_alpha} \n$\u03B2$: {model.params[1]:.4f} {pval_text}')
+    
+    # sm.graphics.plot_fit(model, 0)    
+    
+    # plt.annotate('x1: {}, p: {}'.format(np.around(model.params[1],3),np.around(model.pvalues[1], 3)), xy = (0.1,0.1), xycoords='axes fraction')
+    model = sm.OLS(endog = stats['d_state_ego_y_{}'.format(state_y)], exog = X).fit()
+    a, b = model.params
+
+    y = a + b * x_list
+    plt.plot(x_list,y, '--', color = fit_color, label = 'Linear')
+    
+    # Plot layout
+    plt.legend(loc='best')
+    plt.xlim(-0.25,5.25)
+    plt.ylim(0,0.45)
+    state_name = {0: 'abstaining', 1: 'moderate', 2: 'heavy'}
+    plt.ylabel('{} $\u2192$ {}'.format(state_name[state_x], state_name[state_y]))
+    plt.xlabel("# of {} contacts".format(state_name[d_state_alter]))
+    # plt.show()
+#%%
+
+plt.rcParams["figure.figsize"] = (20,14)
+a = plt.figure()
+ax1 = a.add_subplot(331)
+# ax1.set_facecolor('#DBEBFB')
+log_plot_from_stats(state_x = 0, state_y = 1, d_state_alter = 1, all_waves = True)
+ax2 = a.add_subplot(332)
+# ax2.set_facecolor('#DBEBFB')
+log_plot_from_stats(state_x = 0, state_y = 1, d_state_alter = 2, all_waves = True)
+ax3 = a.add_subplot(333)
+# ax3.set_facecolor('#F6F0FA')
+log_plot_from_stats(state_x = 0, state_y = 2, d_state_alter = 2, all_waves = True, grey_fit= True)
+ax4 = a.add_subplot(334)
+# ax4.set_facecolor('#DBEBFB')
+log_plot_from_stats(state_x = 1, state_y = 0, d_state_alter = 0, all_waves = True)
+# a.add_subplot(335)
+ax5 = a.add_subplot(336)
+# ax5.set_facecolor('#DBEBFB')
+log_plot_from_stats(state_x = 1, state_y = 2, d_state_alter = 2, all_waves = True)
+ax6 = a.add_subplot(337)
+# ax6.set_facecolor('#F6F0FA')
+log_plot_from_stats(state_x = 2, state_y = 1, d_state_alter = 1, all_waves = True, grey_fit= True)
+ax7 = a.add_subplot(338)
+# ax7.set_facecolor('#F6F0FA')
+log_plot_from_stats(state_x = 2, state_y = 1, d_state_alter = 0, all_waves = True, grey_fit= True)
+ax8 = a.add_subplot(339)
+# ax8.set_facecolor('#DBEBFB')
+log_plot_from_stats(state_x = 2, state_y = 0, d_state_alter = 0, all_waves = True)
+
+
+plt.tight_layout()
+
+plt.show()
+plt.rcParams["figure.figsize"] = [12,8]
+
+# %%
